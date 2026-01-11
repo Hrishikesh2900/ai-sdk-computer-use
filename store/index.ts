@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit"
+import uiReducer from "./ui/slice"
 import agentEventsReducer from "./agentEvents/agentEventsSlice"
 
 export const store = configureStore({
   reducer: {
     agentEvents: agentEventsReducer,
+    ui: uiReducer,
   },
 })
 

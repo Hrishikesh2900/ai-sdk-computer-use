@@ -1,32 +1,36 @@
-"use client";
+import { AgentEventStatus, AgentEventType } from "@/store/types";
 
 type ToolCallCardProps = {
-  toolName: string;
-  status: "pending" | "complete" | "error";
+  toolName: AgentEventType;
+  status: AgentEventStatus;
+  duration?: number;
   onClick: () => void;
 };
 
 export function ToolCallCard({
   toolName,
   status,
+  duration,
   onClick,
 }: ToolCallCardProps) {
-  const bg =
-    status === "pending"
-      ? "bg-yellow-100 border-yellow-300"
-      : status === "error"
-      ? "bg-red-100 border-red-300"
-      : "bg-green-100 border-green-300";
-
   return (
     <div
       onClick={onClick}
-      className={`mt-2 cursor-pointer rounded-md border p-2 text-xs ${bg}`}
+      className="cursor-pointer rounded border p-3 text-sm
+                 hover:bg-muted transition flex justify-between items-center"
     >
-      <div className="flex justify-between font-medium">
-        <span>{toolName}</span>
-        <span>{status}</span>
+      <div>
+        <div className="font-medium capitalize">{toolName}</div>
+        <div className="text-xs text-muted-foreground">
+          {status}
+        </div>
       </div>
+
+      {duration !== undefined && (
+        <div className="text-xs text-muted-foreground">
+          {duration} ms
+        </div>
+      )}
     </div>
   );
 }

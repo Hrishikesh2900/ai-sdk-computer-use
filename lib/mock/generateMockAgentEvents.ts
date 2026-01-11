@@ -12,6 +12,7 @@ export function generateMockAgentEvents(prompt: string): AgentEvent[] {
 
   const base = {
     timestamp: now,
+    duration: Math.floor(Math.random() * 800) + 200,
     status: "complete" as const,
   };
 

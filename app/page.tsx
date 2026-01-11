@@ -22,6 +22,8 @@ import DebugPanel from "@/components/debugPanel/DebugPanel";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addEvent } from "@/store/agentEvents/agentEventsSlice";
 import { generateMockAgentEvents } from "@/lib/mock/generateMockAgentEvents";
+import { selectEvent } from "@/store/ui/slice";
+import { ToolDetails } from "@/components/rightPanel/toolDetails";
 
 export default function Chat() {
   const dispatch = useAppDispatch();
@@ -29,8 +31,14 @@ export default function Chat() {
   const agentEvents = useAppSelector(
     (state) => state.agentEvents.events
   );
+  const selectedEventId = useAppSelector(
+    (s) => s.ui.selectedEventId
+  );
 
-  const [visibleEventIds, setVisibleEventIds] = useState<string[]>([]);
+  const selectedEvent = agentEvents.find(
+    (e) => e.id === selectedEventId
+  );
+
 
   const [desktopContainerRef, desktopEndRef] = useScrollToBottom();
   const [mobileContainerRef, mobileEndRef] = useScrollToBottom();
@@ -82,16 +90,6 @@ export default function Chat() {
     init();
   }, []);
 
-  const showEventTemporarily = (eventId: string) => {
-    setVisibleEventIds((prev) => [...prev, eventId]);
-
-    setTimeout(() => {
-      setVisibleEventIds((prev) =>
-        prev.filter((id) => id !== eventId)
-      );
-    }, 2000);
-  };
-
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSubmit(e);
@@ -99,7 +97,6 @@ export default function Chat() {
     const events = generateMockAgentEvents(input);
     events.forEach((event) => {
       dispatch(addEvent(event));
-      showEventTemporarily(event.id);
     });
   };
 
@@ -124,14 +121,13 @@ export default function Chat() {
                   disabled={isInitializing}
                   submitPrompt={(prompt) => {
                     handleSubmit({
-                      preventDefault: () => {},
+                      preventDefault: () => { },
                       target: { value: prompt },
                     } as unknown as React.FormEvent);
 
                     const events = generateMockAgentEvents(prompt);
                     events.forEach((event) => {
                       dispatch(addEvent(event));
-                      showEventTemporarily(event.id);
                     });
                   }}
                 />
@@ -147,17 +143,14 @@ export default function Chat() {
                 />
               ))}
 
-              {/* TEMP TOOL UI */}
               {agentEvents
-                .filter((e) => visibleEventIds.includes(e.id))
                 .map((event) => (
                   <ToolCallCard
                     key={event.id}
                     toolName={event.type}
                     status={event.status}
-                    onClick={() =>
-                      console.log("Selected event:", event)
-                    }
+                    duration={event.duration}
+                    onClick={() => dispatch(selectEvent(event.id))}
                   />
                 ))}
 
@@ -181,17 +174,47 @@ export default function Chat() {
           <ResizableHandle withHandle />
 
           {/* RIGHT */}
-          <ResizablePanel defaultSize={70} minSize={40} className="bg-black">
-            {streamUrl && (
-              <>
-                <iframe src={streamUrl} className="w-full h-full" />
-                <Button
-                  onClick={refreshDesktop}
-                  className="absolute top-2 right-2"
+          <ResizablePanel
+            defaultSize={70}
+            minSize={40}
+            className="relative bg-black flex"
+          >
+            {/* VNC AREA */}
+            <div
+              className={`relative transition-all duration-300 ${selectedEvent ? "flex-1" : "w-full"
+                }`}
+            >
+              {streamUrl ? (
+                <>
+                  <iframe src={streamUrl} className="w-full h-full" />
+                  <Button
+                    onClick={refreshDesktop}
+                    className="absolute top-2 right-2 z-10"
+                  >
+                    New desktop
+                  </Button>
+                </>
+              ) : (
+                <div className="text-white flex items-center justify-center h-full">
+                  Initializing desktop…
+                </div>
+              )}
+            </div>
+
+            {/* TOOL DETAILS — ONLY WHEN EVENT IS SELECTED */}
+            {selectedEvent && (
+              <div className="w-[360px] border-l bg-white p-4 overflow-y-auto relative">
+                {/* CLOSE ICON */}
+                <button
+                  onClick={() => dispatch(selectEvent(null))}
+                  className="absolute top-2 right-2 text-muted-foreground hover:text-black"
+                  aria-label="Close tool details"
                 >
-                  New desktop
-                </Button>
-              </>
+                  ✕
+                </button>
+
+                <ToolDetails event={selectedEvent} />
+              </div>
             )}
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -211,15 +234,13 @@ export default function Chat() {
           ))}
 
           {agentEvents
-            .filter((e) => visibleEventIds.includes(e.id))
             .map((event) => (
               <ToolCallCard
                 key={event.id}
                 toolName={event.type}
                 status={event.status}
-                onClick={() =>
-                  console.log("Selected event:", event)
-                }
+                duration={event.duration}
+                onClick={() => dispatch(selectEvent(event.id))}
               />
             ))}
 
