@@ -16,11 +16,45 @@
 
 ## Features
 
-- Streaming text responses powered by the [AI SDK by Vercel](https://sdk.vercel.ai/docs), allowing multiple AI providers to be used interchangeably with just a few lines of code.
-- Integration with Anthropic Claude 3.7 Sonnet's computer use tool and bash tool capabilities.
-- Sandbox environment with [e2b](https://e2b.dev) for secure execution.
-- [shadcn/ui](https://ui.shadcn.com/) components for a modern, responsive UI powered by [Tailwind CSS](https://tailwindcss.com).
-- Built with the latest [Next.js](https://nextjs.org) App Router.
+  Two-Panel Layout
+  Left Panel
+  Streaming chat interface
+  Inline tool call cards
+  Collapsible debug/event panel
+  Right Panel
+  Live VNC viewer (E2B desktop)
+  Expanded tool call details (on selection)
+  Panels are horizontally resizable and optimized for desktop and tablet.
+
+## Tool Call Visualization
+
+  Tool calls are rendered as interactive UI elements with:
+  Type, status (pending / complete / error), and duration
+  Clickable cards that reveal detailed output
+  
+## Tool-specific rendering:
+
+  Screenshots – inline card, expanded preview
+  Bash commands – command and output
+  Browser actions – action type and target
+  Typing – text and destination
+
+## Event Pipeline & Debugging
+
+  Centralized event store using Redux
+  Strongly typed events with discriminated unions
+  Derived state for timelines, counts, and execution status
+  Collapsible debug panel for observability
+
+## Performance & UX
+  VNC viewer does not re-render on chat or event updates
+  Clean component boundaries
+  Responsive mobile layout
+  Mock vs Real Computer Use
+  Anthropic’s official computer-use models are gated and not available on standard developer plans.
+
+This project uses a mock execution layer to fully power the UI, event pipeline, and debugging experience.
+The architecture allows swapping to live computer-use tools without UI changes.
 
 ## Deploy Your Own
 
