@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { DeployButton, ProjectInfo } from "@/components/project-info";
+import { DeployButton } from "@/components/project-info";
 import { AISDKLogo } from "@/components/icons";
 import { PromptSuggestions } from "@/components/prompt-suggestions";
 import {

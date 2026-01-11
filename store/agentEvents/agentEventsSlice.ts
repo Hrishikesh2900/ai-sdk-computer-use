@@ -16,22 +16,19 @@ const agentEventsSlice = createSlice({
     addEvent(state, action: PayloadAction<AgentEvent>) {
       state.events.push(action.payload);
     },
-    updateEventStatus(
+    updateEventStatus: (
       state,
       action: PayloadAction<{
         id: string;
-        status: AgentEventStatus;
-        payload?: unknown;
+        status: AgentEvent["status"];
       }>
-    ) {
+    ) => {
       const event = state.events.find(e => e.id === action.payload.id);
       if (!event) return;
 
       event.status = action.payload.status;
-      if (action.payload.payload !== undefined) {
-        event.payload = action.payload.payload;
-      }
     },
+
     clearEvents(state) {
       state.events = [];
     },
