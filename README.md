@@ -1,60 +1,136 @@
-<a href="https://ai-sdk-starter-groq.vercel.app">
-  <h1 align="center">AI SDK Computer Use Demo</h1>
-</a>
+Author: Hrishikesh.Patil
 
-<p align="center">
-  An open-source AI chatbot app template demonstrating Anthropic Claude 3.7 Sonnet's computer use capabilities, built with Next.js and the AI SDK by Vercel.
-</p>
+<p align="center"> <a href="https://ai-sdk-starter-groq.vercel.app"> <h2 align="center">AI SDK Computer Use Demo</h2> </a> </p> <p align="center"> An interactive AI agent demo built with <strong>Next.js</strong> and <strong>Vercel AI SDK</strong>, showcasing a computer-use style workflow inspired by <strong>Claude 3.7 Sonnet</strong>. </p> <p align="center"> <a href="#live-demo--video"><strong>Live Demo & Video</strong></a> · <a href="#features--deliverables-mapping"><strong>Features</strong></a> · <a href="#architecture-overview"><strong>Architecture</strong></a> · <a href="#running-locally"><strong>Running Locally</strong></a> </p>
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
-  <a href="#running-locally"><strong>Running Locally</strong></a> ·
-  <a href="#authors"><strong>Authors</strong></a>
-</p>
-<br/>
 
-## Features
+=> Live Demo & Video
 
-  Two-Panel Layout
-  Left Panel
-  Streaming chat interface
-  Inline tool call cards
-  Collapsible debug/event panel
-  Right Panel
-  Live VNC viewer (E2B desktop)
-  Expanded tool call details (on selection)
-  Panels are horizontally resizable and optimized for desktop and tablet.
+Live Deployed Application: (https://aisdkcomputeruse-tau.vercel.app/)
 
-## Tool Call Visualization
+Demo Video (with voice narration): 
 
-  Tool calls are rendered as interactive UI elements with:
-  Type, status (pending / complete / error), and duration
-  Clickable cards that reveal detailed output
-  
-## Tool-specific rendering:
+The demo video includes voice narration explaining the project flow, UI components, and how each feature satisfies the challenge deliverables.
 
-  Screenshots – inline card, expanded preview
-  Bash commands – command and output
-  Browser actions – action type and target
-  Typing – text and destination
+📌 Project Overview
 
-## Event Pipeline & Debugging
+This project demonstrates a computer-use style AI agent interface, where an AI assistant:
 
-  Centralized event store using Redux
-  Strongly typed events with discriminated unions
-  Derived state for timelines, counts, and execution status
-  Collapsible debug panel for observability
+-Chats with the user
 
-## Performance & UX
-  VNC viewer does not re-render on chat or event updates
-  Clean component boundaries
-  Responsive mobile layout
-  Mock vs Real Computer Use
-  Anthropic’s official computer-use models are gated and not available on standard developer plans.
+-Emits structured tool calls
 
-This project uses a mock execution layer to fully power the UI, event pipeline, and debugging experience.
-The architecture allows swapping to live computer-use tools without UI changes.
+-Visualizes tool execution
+
+-Interacts with a simulated desktop environment
+
+-The goal is to showcase:
+
+-Clear agent → tool → UI orchestration
+
+-Strong frontend architecture
+
+-Debuggability and observability of AI actions
+
+⚠️ Note: Anthropic’s official computer-use tools are currently gated.
+This project uses a mock execution layer to fully demonstrate the UI, event pipeline, and system design without relying on restricted APIs.
+
+Features & Deliverables Mapping
+1. AI Chat Interface
+
+Streaming chat responses
+
+Message history with clear role separation
+
+Real-time updates using Vercel AI SDK
+
+-Demonstrated in demo video
+-Matches AI interaction requirement
+
+2. Tool Call Visualization
+
+Each AI tool call is rendered as an interactive UI card showing:
+
+Tool type (screenshot, bash, browser action, typing)
+
+Execution status (pending / complete / error)
+
+Execution duration
+
+Clicking a card reveals detailed output.
+
+-Makes AI actions transparent
+-Improves explainability & debugging
+
+3. Two-Panel Responsive Layout
+
+Left Panel
+
+Chat interface
+
+Inline tool call cards
+
+Collapsible debug / event panel
+
+Right Panel
+
+Live VNC desktop viewer
+
+Expanded tool call details on selection
+
+Panels are:
+
+Horizontally resizable
+
+Optimized for desktop & tablet layouts
+
+-Clean separation of concerns
+-Strong UX focus
+
+4. Event Pipeline & Debugging
+
+Centralized event store using Redux
+
+Strongly typed event definitions
+
+Derived state for:
+
+Timelines
+
+Execution status
+
+Tool counts
+
+Collapsible debug panel for observability
+
+-Demonstrates scalable state management
+-Production-ready architecture
+
+5. Performance Considerations
+
+VNC viewer does not re-render on chat or event updates
+
+Isolated component boundaries
+
+Minimal unnecessary state updates
+
+-Shows attention to performance & UX
+
+=> Architecture Overview
+User Input
+   ↓
+AI SDK (Streaming Response)
+   ↓
+Structured Tool Calls
+   ↓
+Redux Event Store
+   ↓
+UI Rendering (Chat / Tool Cards / VNC Viewer)
+
+Mock vs Real Computer Use
+
+Tool execution is mocked to simulate real computer-use behavior
+
+Architecture allows swapping mock tools with real integrations without UI changes
 
 ## Deploy Your Own
 
