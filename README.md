@@ -7,7 +7,7 @@ Author: Hrishikesh.Patil
 
 Live Deployed Application: (https://aisdkcomputeruse-tau.vercel.app/)
 
-Demo Video (with voice narration): 
+Demo Video (with voice narration): https://drive.google.com/file/d/1izRHkwEm-6gAuEDs5dIiS9eUa8kRyuIp/view?usp=drive_link
 
 The demo video includes voice narration explaining the project flow, UI components, and how each feature satisfies the challenge deliverables.
 
