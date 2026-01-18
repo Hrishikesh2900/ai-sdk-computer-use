@@ -77,6 +77,22 @@ Live VNC desktop viewer
 
 Expanded tool call details on selection
 
+4. Multi-Chat Sessions
+- Create multiple chat sessions
+- Switch between chats instantly
+- Each chat maintains its own:
+  - Message history
+  - Agent/tool events
+- Auto-generated chat titles from the first user message
+
+5. Responsive UI
+- **Desktop**: Persistent left sidebar for chat sessions
+- **Mobile / Tablet**:
+  - Slide-in chat sidebar (☰ menu)
+  - Close (✕) icon for easy dismissal
+- Fully responsive layout with resizable panels
+
+
 Panels are:
 
 Horizontally resizable
