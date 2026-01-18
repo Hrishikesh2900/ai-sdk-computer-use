@@ -65,13 +65,22 @@ export default function Page() {
   } = useChat({
     id: activeSessionId ?? undefined,
     api: "/api/chat",
-    initialMessages: activeSession?.messages ?? [],
+    initialMessages:
+      activeSession?.messages.map((m) => ({
+        ...m,
+        createdAt: new Date(m.createdAt),
+      })) ?? [],
     maxSteps: 30,
     onFinish: (message) => {
       dispatch(
         addMessage({
           sessionId: activeSessionId!,
-          message,
+          message: {
+            ...message,
+            createdAt: message.createdAt
+              ? message.createdAt.getTime()
+              : Date.now(),
+          },
         })
       );
     },

@@ -1,11 +1,11 @@
 import { createSlice, nanoid, PayloadAction } from "@reduxjs/toolkit";
-import { Message } from "ai";
+import { SerializableMessage } from "./types";
 import { AgentEvent } from "../types";
 
 type Session = {
   id: string;
   title: string;
-  messages: Message[];
+  messages: SerializableMessage[];
   events: AgentEvent[];
   createdAt: number;
 };
@@ -42,7 +42,7 @@ const sessionsSlice = createSlice({
 
     addMessage: (
       state,
-      action: PayloadAction<{ sessionId: string; message: Message }>
+      action: PayloadAction<{ sessionId: string; message: SerializableMessage }>
     ) => {
       const session = state.sessions[action.payload.sessionId];
       if (!session) return;
