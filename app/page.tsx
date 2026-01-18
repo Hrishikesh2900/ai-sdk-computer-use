@@ -49,6 +49,7 @@ export default function Page() {
     handleSubmit,
     status,
     stop: stopGeneration,
+    append,
   } = useChat({
     api: "/api/chat",
     id: sandboxId ?? undefined,
@@ -145,16 +146,16 @@ export default function Page() {
               {messages.length === 0 && (
                 <PromptSuggestions
                   disabled={isInitializing}
-                  submitPrompt={(prompt) => {
-                    handleSubmit({
-                      preventDefault: () => { },
-                      target: { value: prompt },
-                    } as unknown as React.FormEvent);
+                submitPrompt={(prompt) => {
+                  append({
+                    role: "user",
+                    content: prompt,
+                  });
 
-                    generateMockAgentEvents(prompt).forEach((event) =>
-                      dispatch(addEvent(event))
-                    );
-                  }}
+                  generateMockAgentEvents(prompt).forEach((event) =>
+                    dispatch(addEvent(event))
+                  );
+                }}
                 />
               )}
             {/* Input */}
@@ -256,11 +257,10 @@ export default function Page() {
             <PromptSuggestions
               disabled={isInitializing}
               submitPrompt={(prompt) => {
-                handleSubmit({
-                  preventDefault: () => { },
-                  target: { value: prompt },
-                } as unknown as React.FormEvent);
-
+                append({
+                  role: "user",
+                  content: prompt,
+                });
                 generateMockAgentEvents(prompt).forEach((event) =>
                   dispatch(addEvent(event))
                 );
