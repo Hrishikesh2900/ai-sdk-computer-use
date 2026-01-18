@@ -120,22 +120,6 @@ export default function Page() {
               className="flex-1 space-y-6 py-4 overflow-y-auto px-4"
               ref={desktopContainerRef}
             >
-              {messages.length === 0 && (
-                <PromptSuggestions
-                  disabled={isInitializing}
-                  submitPrompt={(prompt) => {
-                    handleSubmit({
-                      preventDefault: () => { },
-                      target: { value: prompt },
-                    } as unknown as React.FormEvent);
-
-                    generateMockAgentEvents(prompt).forEach((event) =>
-                      dispatch(addEvent(event))
-                    );
-                  }}
-                />
-              )}
-
               {messages.map((message, i) => (
                 <PreviewMessage
                   key={message.id}
@@ -158,7 +142,21 @@ export default function Page() {
 
               <div ref={desktopEndRef} />
             </div>
+              {messages.length === 0 && (
+                <PromptSuggestions
+                  disabled={isInitializing}
+                  submitPrompt={(prompt) => {
+                    handleSubmit({
+                      preventDefault: () => { },
+                      target: { value: prompt },
+                    } as unknown as React.FormEvent);
 
+                    generateMockAgentEvents(prompt).forEach((event) =>
+                      dispatch(addEvent(event))
+                    );
+                  }}
+                />
+              )}
             {/* Input */}
             <form onSubmit={onSubmit} className="p-4 bg-white">
               <Input
