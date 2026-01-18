@@ -25,20 +25,12 @@ import { generateMockAgentEvents } from "@/lib/mock/generateMockAgentEvents";
 import { selectEvent } from "@/store/ui/slice";
 import { ToolDetails } from "@/components/rightPanel/toolDetails";
 
-export default function Chat() {
+export default function Page() {
   const dispatch = useAppDispatch();
 
-  const agentEvents = useAppSelector(
-    (state) => state.agentEvents.events
-  );
-  const selectedEventId = useAppSelector(
-    (s) => s.ui.selectedEventId
-  );
-
-  const selectedEvent = agentEvents.find(
-    (e) => e.id === selectedEventId
-  );
-
+  const agentEvents = useAppSelector((s) => s.agentEvents.events);
+  const selectedEventId = useAppSelector((s) => s.ui.selectedEventId);
+  const selectedEvent = agentEvents.find((e) => e.id === selectedEventId);
 
   const [desktopContainerRef, desktopEndRef] = useScrollToBottom();
   const [mobileContainerRef, mobileEndRef] = useScrollToBottom();
@@ -46,6 +38,9 @@ export default function Chat() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [sandboxId, setSandboxId] = useState<string | null>(null);
+
+  // Mobile / tablet UI prep (no behavior change yet)
+  const [showDesktopMobile, setShowDesktopMobile] = useState(false);
 
   const {
     messages,
@@ -95,23 +90,32 @@ export default function Chat() {
     handleSubmit(e);
 
     const events = generateMockAgentEvents(input);
-    events.forEach((event) => {
-      dispatch(addEvent(event));
-    });
+    events.forEach((event) => dispatch(addEvent(event)));
   };
 
   return (
     <div className="flex h-dvh relative">
-      {/* Desktop */}
+      {/* ===================== DESKTOP ===================== */}
       <div className="w-full hidden xl:block">
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* LEFT */}
           <ResizablePanel defaultSize={30} minSize={25} className="flex flex-col">
-            <div className="bg-white py-4 px-4 flex justify-between">
-              <AISDKLogo />
+            {/* Header */}
+            <div className="bg-white py-4 px-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {/* Mobile menu placeholder (used later) */}
+                <button
+                  className="xl:hidden p-2 rounded hover:bg-muted"
+                  aria-label="Open menu"
+                >
+                  ☰
+                </button>
+                <AISDKLogo />
+              </div>
               <DeployButton />
             </div>
 
+            {/* Chat */}
             <div
               className="flex-1 space-y-6 py-4 overflow-y-auto px-4"
               ref={desktopContainerRef}
@@ -125,10 +129,9 @@ export default function Chat() {
                       target: { value: prompt },
                     } as unknown as React.FormEvent);
 
-                    const events = generateMockAgentEvents(prompt);
-                    events.forEach((event) => {
-                      dispatch(addEvent(event));
-                    });
+                    generateMockAgentEvents(prompt).forEach((event) =>
+                      dispatch(addEvent(event))
+                    );
                   }}
                 />
               )}
@@ -143,20 +146,20 @@ export default function Chat() {
                 />
               ))}
 
-              {agentEvents
-                .map((event) => (
-                  <ToolCallCard
-                    key={event.id}
-                    toolName={event.type}
-                    status={event.status}
-                    duration={event.duration}
-                    onClick={() => dispatch(selectEvent(event.id))}
-                  />
-                ))}
+              {agentEvents.map((event) => (
+                <ToolCallCard
+                  key={event.id}
+                  toolName={event.type}
+                  status={event.status}
+                  duration={event.duration}
+                  onClick={() => dispatch(selectEvent(event.id))}
+                />
+              ))}
 
               <div ref={desktopEndRef} />
             </div>
 
+            {/* Input */}
             <form onSubmit={onSubmit} className="p-4 bg-white">
               <Input
                 handleInputChange={handleInputChange}
@@ -174,12 +177,7 @@ export default function Chat() {
           <ResizableHandle withHandle />
 
           {/* RIGHT */}
-          <ResizablePanel
-            defaultSize={70}
-            minSize={40}
-            className="relative bg-black flex"
-          >
-            {/* VNC AREA */}
+          <ResizablePanel defaultSize={70} minSize={40} className="relative bg-black flex">
             <div
               className={`relative transition-all duration-300 ${selectedEvent ? "flex-1" : "w-full"
                 }`}
@@ -201,18 +199,14 @@ export default function Chat() {
               )}
             </div>
 
-            {/* TOOL DETAILS — ONLY WHEN EVENT IS SELECTED */}
             {selectedEvent && (
               <div className="w-[360px] border-l bg-white p-4 overflow-y-auto relative">
-                {/* CLOSE ICON */}
                 <button
                   onClick={() => dispatch(selectEvent(null))}
                   className="absolute top-2 right-2 text-muted-foreground hover:text-black"
-                  aria-label="Close tool details"
                 >
                   ✕
                 </button>
-
                 <ToolDetails event={selectedEvent} />
               </div>
             )}
@@ -220,8 +214,20 @@ export default function Chat() {
         </ResizablePanelGroup>
       </div>
 
-      {/* Mobile */}
-      <div className="w-full xl:hidden flex flex-col">
+      {/* ===================== MOBILE / TABLET ===================== */}
+      <div className="w-full xl:hidden flex flex-col h-dvh">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-white">
+          <AISDKLogo />
+
+          <button
+            onClick={() => setShowDesktopMobile(true)}
+            className="rounded-md bg-black text-white px-3 py-1.5 text-sm"
+          >
+            Open Desktop
+          </button>
+        </div>
+
         <div className="flex-1 overflow-y-auto px-4" ref={mobileContainerRef}>
           {messages.map((message, i) => (
             <PreviewMessage
@@ -233,20 +239,37 @@ export default function Chat() {
             />
           ))}
 
-          {agentEvents
-            .map((event) => (
-              <ToolCallCard
-                key={event.id}
-                toolName={event.type}
-                status={event.status}
-                duration={event.duration}
-                onClick={() => dispatch(selectEvent(event.id))}
-              />
-            ))}
+          {agentEvents.map((event) => (
+            <ToolCallCard
+              key={event.id}
+              toolName={event.type}
+              status={event.status}
+              duration={event.duration}
+              onClick={() => dispatch(selectEvent(event.id))}
+            />
+          ))}
 
           <div ref={mobileEndRef} />
         </div>
+        {/* Mobile / Tablet Actions (above input) */}
+        {messages.length === 0 && (
+          <div className="px-4 pb-2 space-y-3 border-t bg-white">
+            {/* Prompt Suggestions */}
+            <PromptSuggestions
+              disabled={isInitializing}
+              submitPrompt={(prompt) => {
+                handleSubmit({
+                  preventDefault: () => { },
+                  target: { value: prompt },
+                } as unknown as React.FormEvent);
 
+                generateMockAgentEvents(prompt).forEach((event) =>
+                  dispatch(addEvent(event))
+                );
+              }}
+            />
+          </div>
+        )}
         <form onSubmit={onSubmit} className="p-4 bg-white">
           <Input
             handleInputChange={handleInputChange}
@@ -258,6 +281,28 @@ export default function Chat() {
           />
         </form>
       </div>
+
+      {/* ===================== MOBILE / TABLET DESKTOP MODAL ===================== */}
+      {showDesktopMobile && streamUrl && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col xl:hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between p-2 bg-black text-white">
+            <span className="text-sm">Desktop</span>
+            <button
+              onClick={() => setShowDesktopMobile(false)}
+              className="px-3 py-1 rounded bg-white text-black text-sm"
+            >
+              Close
+            </button>
+          </div>
+          {/* Desktop iframe */}
+          <iframe
+            src={streamUrl}
+            className="flex-1 w-full"
+            allow="autoplay"
+          />
+        </div>
+      )}
     </div>
   );
 }
