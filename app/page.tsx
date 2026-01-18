@@ -1,60 +1,80 @@
 "use client";
 
-import { PreviewMessage } from "@/components/message";
-import { getDesktopURL } from "@/lib/e2b/utils";
-import { useScrollToBottom } from "@/lib/use-scroll-to-bottom";
-import { useChat } from "@ai-sdk/react";
 import { useEffect, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { toast } from "sonner";
+import { PreviewMessage } from "@/components/message";
 import { Input } from "@/components/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { DeployButton } from "@/components/project-info";
 import { AISDKLogo } from "@/components/icons";
 import { PromptSuggestions } from "@/components/prompt-suggestions";
+import { ToolCallCard } from "@/components/toolCallCard";
+import { ToolDetails } from "@/components/rightPanel/toolDetails";
+import DebugPanel from "@/components/debugPanel/DebugPanel";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { ToolCallCard } from "@/components/toolCallCard";
-import DebugPanel from "@/components/debugPanel/DebugPanel";
-
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { addEvent } from "@/store/agentEvents/agentEventsSlice";
+import { getDesktopURL } from "@/lib/e2b/utils";
+import { useScrollToBottom } from "@/lib/use-scroll-to-bottom";
 import { generateMockAgentEvents } from "@/lib/mock/generateMockAgentEvents";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  createSession,
+  addMessage,
+  addEvent,
+} from "@/store/sessions/sessionsSlice";
 import { selectEvent } from "@/store/ui/slice";
-import { ToolDetails } from "@/components/rightPanel/toolDetails";
+import { selectSessionEvents } from "@/store/sessions/agentEventSelectors";
+import { selectActiveSession } from "@/store/agentEvents/selectors";
+import ChatSidebar from "@/components/chat/chatSidebar";
 
 export default function Page() {
   const dispatch = useAppDispatch();
 
-  const agentEvents = useAppSelector((s) => s.agentEvents.events);
+  /* ---------------- SESSION ---------------- */
+  const activeSessionId = useAppSelector((s) => s.sessions.activeId);
+  const activeSession = useAppSelector(selectActiveSession);
+  const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+
+  useEffect(() => {
+    if (!activeSessionId) {
+      dispatch(createSession());
+    }
+  }, [activeSessionId, dispatch]);
+
+  /* ---------------- EVENTS ---------------- */
+  const agentEvents = useAppSelector((state) =>
+    selectSessionEvents(state, activeSessionId)
+  );
+
   const selectedEventId = useAppSelector((s) => s.ui.selectedEventId);
   const selectedEvent = agentEvents.find((e) => e.id === selectedEventId);
 
-  const [desktopContainerRef, desktopEndRef] = useScrollToBottom();
-  const [mobileContainerRef, mobileEndRef] = useScrollToBottom();
-
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [streamUrl, setStreamUrl] = useState<string | null>(null);
-  const [sandboxId, setSandboxId] = useState<string | null>(null);
-
-  // Mobile / tablet UI prep (no behavior change yet)
-  const [showDesktopMobile, setShowDesktopMobile] = useState(false);
-
+  /* ---------------- CHAT ---------------- */
   const {
     messages,
     input,
     handleInputChange,
     handleSubmit,
     status,
-    stop: stopGeneration,
+    stop,
     append,
   } = useChat({
+    id: activeSessionId ?? undefined,
     api: "/api/chat",
-    id: sandboxId ?? undefined,
-    body: { sandboxId },
+    initialMessages: activeSession?.messages ?? [],
     maxSteps: 30,
+    onFinish: (message) => {
+      dispatch(
+        addMessage({
+          sessionId: activeSessionId!,
+          message,
+        })
+      );
+    },
     onError: () => {
       toast.error("There was an error", {
         description: "Please try again later.",
@@ -64,10 +84,15 @@ export default function Page() {
 
   const isLoading = status !== "ready";
 
+  /* ---------------- DESKTOP STREAM ---------------- */
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [sandboxId, setSandboxId] = useState<string | null>(null);
+
   const refreshDesktop = async () => {
     try {
       setIsInitializing(true);
-      const { streamUrl, id } = await getDesktopURL(sandboxId || undefined);
+      const { streamUrl, id } = await getDesktopURL(sandboxId ?? undefined);
       setStreamUrl(streamUrl);
       setSandboxId(id);
     } finally {
@@ -76,23 +101,33 @@ export default function Page() {
   };
 
   useEffect(() => {
-    const init = async () => {
-      setIsInitializing(true);
-      const { streamUrl, id } = await getDesktopURL(sandboxId ?? undefined);
-      setStreamUrl(streamUrl);
-      setSandboxId(id);
-      setIsInitializing(false);
-    };
-    init();
+    refreshDesktop();
   }, []);
 
+  /* ---------------- SCROLL ---------------- */
+  const [desktopContainerRef, desktopEndRef] = useScrollToBottom();
+  const [mobileContainerRef, mobileEndRef] = useScrollToBottom();
+
+  /* ---------------- MOBILE ---------------- */
+  const [showDesktopMobile, setShowDesktopMobile] = useState(false);
+
+  /* ---------------- SUBMIT ---------------- */
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSubmit(e);
 
     const events = generateMockAgentEvents(input);
-    events.forEach((event) => dispatch(addEvent(event)));
+    events.forEach((event) =>
+      dispatch(
+        addEvent({
+          sessionId: activeSessionId!,
+          event,
+        })
+      )
+    );
   };
+
+  /* ========================================================= */
 
   return (
     <div className="flex h-dvh relative">
@@ -100,17 +135,11 @@ export default function Page() {
       <div className="w-full hidden xl:block">
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* LEFT */}
+            <ChatSidebar />
           <ResizablePanel defaultSize={30} minSize={25} className="flex flex-col">
             {/* Header */}
             <div className="bg-white py-4 px-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {/* Mobile menu placeholder (used later) */}
-                <button
-                  className="xl:hidden p-2 rounded hover:bg-muted"
-                  aria-label="Open menu"
-                >
-                  ☰
-                </button>
                 <AISDKLogo />
               </div>
               <DeployButton />
@@ -118,8 +147,8 @@ export default function Page() {
 
             {/* Chat */}
             <div
-              className="flex-1 space-y-6 py-4 overflow-y-auto px-4"
               ref={desktopContainerRef}
+              className="flex-1 space-y-6 py-4 overflow-y-auto px-4"
             >
               {messages.map((message, i) => (
                 <PreviewMessage
@@ -143,22 +172,25 @@ export default function Page() {
 
               <div ref={desktopEndRef} />
             </div>
-              {messages.length === 0 && (
-                <PromptSuggestions
-                  disabled={isInitializing}
+
+            {messages.length === 0 && (
+              <PromptSuggestions
+                disabled={isInitializing}
                 submitPrompt={(prompt) => {
-                  append({
-                    role: "user",
-                    content: prompt,
-                  });
+                  append({ role: "user", content: prompt });
 
                   generateMockAgentEvents(prompt).forEach((event) =>
-                    dispatch(addEvent(event))
+                    dispatch(
+                      addEvent({
+                        sessionId: activeSessionId!,
+                        event,
+                      })
+                    )
                   );
                 }}
-                />
-              )}
-            {/* Input */}
+              />
+            )}
+
             <form onSubmit={onSubmit} className="p-4 bg-white">
               <Input
                 handleInputChange={handleInputChange}
@@ -166,7 +198,7 @@ export default function Page() {
                 isInitializing={isInitializing}
                 isLoading={isLoading}
                 status={status}
-                stop={stopGeneration}
+                stop={stop}
               />
             </form>
 
@@ -177,10 +209,7 @@ export default function Page() {
 
           {/* RIGHT */}
           <ResizablePanel defaultSize={70} minSize={40} className="relative bg-black flex">
-            <div
-              className={`relative transition-all duration-300 ${selectedEvent ? "flex-1" : "w-full"
-                }`}
-            >
+            <div className={`relative ${selectedEvent ? "flex-1" : "w-full"}`}>
               {streamUrl ? (
                 <>
                   <iframe src={streamUrl} className="w-full h-full" />
@@ -202,7 +231,7 @@ export default function Page() {
               <div className="w-[360px] border-l bg-white p-4 overflow-y-auto relative">
                 <button
                   onClick={() => dispatch(selectEvent(null))}
-                  className="absolute top-2 right-2 text-muted-foreground hover:text-black"
+                  className="absolute top-2 right-2"
                 >
                   ✕
                 </button>
@@ -213,12 +242,16 @@ export default function Page() {
         </ResizablePanelGroup>
       </div>
 
-      {/* ===================== MOBILE / TABLET ===================== */}
+      {/* ===================== MOBILE ===================== */}
       <div className="w-full xl:hidden flex flex-col h-dvh">
-        {/* Mobile Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b bg-white">
+          <button
+            onClick={() => setShowSidebarMobile(true)}
+            className="xl:hidden p-2 rounded hover:bg-muted"
+          >
+            ☰
+          </button>
           <AISDKLogo />
-
           <button
             onClick={() => setShowDesktopMobile(true)}
             className="rounded-md bg-black text-white px-3 py-1.5 text-sm"
@@ -227,14 +260,14 @@ export default function Page() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4" ref={mobileContainerRef}>
+        <div ref={mobileContainerRef} className="flex-1 overflow-y-auto px-4">
           {messages.map((message, i) => (
             <PreviewMessage
               key={message.id}
               message={message}
+              isLatestMessage={i === messages.length - 1}
               isLoading={isLoading}
               status={status}
-              isLatestMessage={i === messages.length - 1}
             />
           ))}
 
@@ -250,21 +283,21 @@ export default function Page() {
 
           <div ref={mobileEndRef} />
         </div>
-        {/* Mobile / Tablet Actions (above input) */}
         {messages.length === 0 && (
           <div className="px-4 pb-2 space-y-3 border-t bg-white">
-            {/* Prompt Suggestions */}
             <PromptSuggestions
               disabled={isInitializing}
               submitPrompt={(prompt) => {
-                append({
-                  role: "user",
-                  content: prompt,
-                });
-                generateMockAgentEvents(prompt).forEach((event) =>
-                  dispatch(addEvent(event))
-                );
-              }}
+                  append({ role: "user", content: prompt });
+                  generateMockAgentEvents(prompt).forEach((event) =>
+                    dispatch(
+                      addEvent({
+                        sessionId: activeSessionId!,
+                        event,
+                      })
+                    )
+                  );
+                }}
             />
           </div>
         )}
@@ -275,30 +308,35 @@ export default function Page() {
             isInitializing={isInitializing}
             isLoading={isLoading}
             status={status}
-            stop={stopGeneration}
+            stop={stop}
           />
         </form>
       </div>
 
-      {/* ===================== MOBILE / TABLET DESKTOP MODAL ===================== */}
+      {/* MOBILE DESKTOP MODAL */}
       {showDesktopMobile && streamUrl && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col xl:hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-2 bg-black text-white">
+          <div className="flex items-center justify-between p-2 text-white">
             <span className="text-sm">Desktop</span>
             <button
               onClick={() => setShowDesktopMobile(false)}
-              className="px-3 py-1 rounded bg-white text-black text-sm"
+              className="bg-white text-black px-3 py-1 rounded text-sm"
             >
               Close
             </button>
           </div>
-          {/* Desktop iframe */}
-          <iframe
-            src={streamUrl}
-            className="flex-1 w-full"
-            allow="autoplay"
+          <iframe src={streamUrl} className="flex-1 w-full" />
+        </div>
+      )}
+      {showSidebarMobile && (
+        <div className="fixed inset-0 z-50 xl:hidden">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowSidebarMobile(false)}
           />
+          <div className="absolute left-0 top-0 h-full w-[280px] bg-white">
+            <ChatSidebar onClose={() => setShowSidebarMobile(false)} />
+          </div>
         </div>
       )}
     </div>

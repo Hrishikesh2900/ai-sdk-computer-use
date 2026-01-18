@@ -17,3 +17,11 @@ export const selectAgentStatus = (s: RootState): AgentRuntimeStatus => {
   }
   return "idle";
 };
+
+export const selectActiveSession = (state: RootState) => {
+  const activeId = state.sessions.activeId;
+  if (!activeId) return null;
+
+  return state.sessions.sessions[activeId] ?? null;
+};
+
